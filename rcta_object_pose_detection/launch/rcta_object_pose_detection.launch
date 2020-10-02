@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="iso-8859-15"?>
+
+<launch>
+  <arg name="camera_topic" default="/camera/rgb/image_raw"/>
+  <arg name="camera_info_topic" default="/camera/rgb/camera_info"/>
+  <arg name="detected_objects_topic" default="/detected_objects"/>
+  
+  <!-- The FasterRCNN model should be located in
+       py_faster_rcnn_ros/models/caffe -->
+  <arg name="faster_rcnn_model" default="ZF_faster_rcnn_all_three_extra_case.caffemodel"/>
+  <arg name="confidence" default="0.5"/>
+  
+  
+  <!-- The keypoint model should be located in 
+       rcta_object_pose_detection/models/keypoint_localization -->
+  <arg name="keypoint_model" default="keypoints.pt"/>
+  <!-- This file describes the keypoints that correspond to each object class.
+       It should be in rcta_object_pose_detection/models/keypoint_localization
+  -->
+  <arg name="num_keypoints_file" default="num_keypoints.txt"/>
+  <arg name="model_type" default="small"/>
+
+  <node name="faster_rcnn" pkg="py_faster_rcnn_ros" type="detector_manager.py" required="true" output="screen">
+    <param name="image_topic" value="$(arg camera_topic)"/>
+    <remap from="/detected_objects_in_image" to="$(arg detected_objects_topic)"/>
+    <param name="autostart" value="true"/>
+    <param name="caffe_model" value="$(arg faster_rcnn_model)"/>
+    <param name="confidence" value="$(arg confidence)"/>
+  </node>
+
+  <node name="keypoint_detector" pkg="rcta_object_pose_detection" type="keypoint_detector.py" required="true" output="screen">
+    <remap from="/image" to="$(arg camera_topic)"/>
+    <param name="num_keypoints_file" value="$(arg num_keypoints_file)"/>
+    <param name="model_path" value="$(arg keypoint_model)"/>
+    <param name="model_type" value="$(arg model_type)"/>
+    <remap from="/detected_objects" to="/roman3/detected_objects"/>
+  </node>
+    
+  <node name="pose_optimizer" pkg="object_pose_keypoint_optimizer" type="node" required="false" respawn="true" output="screen">
+    <remap from="/detected_objects" to="$(arg detected_objects_topic)"/>
+    <remap from="/camera/rgb/camera_info" to="$(arg camera_info_topic)"/>
+  </node>
+  
+</launch>
