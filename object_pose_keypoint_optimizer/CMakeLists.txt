@@ -14,6 +14,8 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   gtsam
   message_filters
+  wm_od_interface_msgs
+  rcta_perception_msgs
 )
 
 ## System dependencies are found with CMake's conventions

@@ -53,20 +53,20 @@ link_libraries(${catkin_LIBRARIES} ${PCL_LIBRARIES})
 # catkin_python_setup()
 
 ## Generate services in the 'srv' folder
- add_service_files(
-   FILES
-   ImageFrame.srv
-   ObjectLabel.srv
- )
+# add_service_files(
+#   FILES
+#   ImageFrame.srv
+#   ObjectLabel.srv
+# )
 
 ## Generate added messages and services with any dependencies listed here
- generate_messages(
-   DEPENDENCIES
-   std_msgs
-   sensor_msgs
-   geometry_msgs
-   rcta_object_pose_detection
- )
+# generate_messages(
+#   DEPENDENCIES
+#   std_msgs
+#   sensor_msgs
+#   geometry_msgs
+#   rcta_object_pose_detection
+# )
 
 ###################################
 ## catkin specific configuration ##
@@ -79,7 +79,7 @@ link_libraries(${catkin_LIBRARIES} ${PCL_LIBRARIES})
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
 
-  INCLUDE_DIRS include
+#  INCLUDE_DIRS include
   LIBRARIES rcta_object_pose_detection
   CATKIN_DEPENDS rospy std_msgs message_runtime cv_bridge pcl_ros image_transport image_geometry
   DEPENDS #Eigen3 boost opencv PCL libqhull libvtk libvtk-qt
@@ -106,8 +106,8 @@ include_directories(
 
 
 # compile libs and bins
-add_executable(obj_detection_xtion src/detect_pc_xtion.cpp)
-target_link_libraries(obj_detection_xtion ${OpenCV_LIBRARIES} ${Boost_LIBRARIES}) # ${VTK_LIBRARIES}
+#add_executable(obj_detection_xtion src/detect_pc_xtion.cpp)
+#target_link_libraries(obj_detection_xtion ${OpenCV_LIBRARIES} ${Boost_LIBRARIES}) # ${VTK_LIBRARIES}
 
 
 ## Mark executable scripts (Python etc.) for installation
@@ -122,16 +122,16 @@ install(PROGRAMS
 
 install(DIRECTORY
     src/models
-    object_ros/objectPose/for_redistribution_files_only/objectPose
+#    object_ros/objectPose/for_redistribution_files_only/objectPose
     DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
     )
 
 ## Mark executables and/or libraries for installation
-install(TARGETS obj_detection_xtion # ${PROJECT_NAME} ${PROJECT_NAME}_node
-  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-)
+#install(TARGETS obj_detection_xtion # ${PROJECT_NAME} ${PROJECT_NAME}_node
+#  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+#  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+#  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+#)
 
 
 ## Mark other files for installation (e.g. launch and bag files, etc.)
