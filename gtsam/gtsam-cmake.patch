@@ -1,0 +1,201 @@
+diff --git a/gtsam-2.3.0/CMakeLists.txt b/gtsam-2.3.0/CMakeLists.txt
+index 159975c..c7e1160 100644
+--- a/gtsam-2.3.0/CMakeLists.txt
++++ b/gtsam-2.3.0/CMakeLists.txt
+@@ -20,6 +20,8 @@ include(GtsamMakeConfigFile)
+ # Record the root dir for gtsam - needed during external builds, e.g., ROS
+ set(GTSAM_SOURCE_ROOT_DIR ${CMAKE_CURRENT_SOURCE_DIR})
+ message(STATUS "GTSAM_SOURCE_ROOT_DIR: [${GTSAM_SOURCE_ROOT_DIR}]")
++set(GTSAM_BINARY_ROOT_DIR ${CMAKE_CURRENT_BINARY_DIR})
++message(STATUS "GTSAM_BINARY_ROOT_DIR: [${GTSAM_BINARY_ROOT_DIR}]")
+ 
+ # Load build type flags and default to Debug mode
+ include(GtsamBuildTypes)
+@@ -151,7 +153,7 @@ endif()
+ configure_file(gtsam/3rdparty/gtsam_eigen_includes.h.in gtsam/3rdparty/gtsam_eigen_includes.h)
+ 
+ # Install the configuration file for Eigen
+-install(FILES ${CMAKE_BINARY_DIR}/gtsam/3rdparty/gtsam_eigen_includes.h DESTINATION include/gtsam/3rdparty)
++install(FILES ${GTSAM_BINARY_ROOT_DIR}/gtsam/3rdparty/gtsam_eigen_includes.h DESTINATION include/gtsam/3rdparty)
+ 
+ 
+ ###############################################################################
+@@ -161,8 +163,8 @@ install(FILES ${CMAKE_BINARY_DIR}/gtsam/3rdparty/gtsam_eigen_includes.h DESTINAT
+ include_directories(BEFORE
+   gtsam/3rdparty/UFconfig 
+   gtsam/3rdparty/CCOLAMD/Include
+-  ${CMAKE_SOURCE_DIR}
+-  ${CMAKE_BINARY_DIR} # So we can include generated config header files
++  ${GTSAM_SOURCE_ROOT_DIR}
++  ${GTSAM_BINARY_ROOT_DIR} # So we can include generated config header files
+   CppUnitLite
+   ${Boost_INCLUDE_DIR})
+ link_directories(${Boost_LIBRARY_DIRS})
+diff --git a/gtsam-2.3.0/cmake/Config.cmake.in b/gtsam-2.3.0/cmake/Config.cmake.in
+index 7aef75f..082e1e3 100644
+--- a/gtsam-2.3.0/cmake/Config.cmake.in
++++ b/gtsam-2.3.0/cmake/Config.cmake.in
+@@ -6,7 +6,7 @@
+ get_filename_component(OUR_CMAKE_DIR "${CMAKE_CURRENT_LIST_FILE}" PATH)
+ if(EXISTS "${OUR_CMAKE_DIR}/CMakeCache.txt")
+   # In build tree
+-  set(@PACKAGE_NAME@_INCLUDE_DIR @CMAKE_SOURCE_DIR@ CACHE PATH "@PACKAGE_NAME@ include directory")
++  set(@PACKAGE_NAME@_INCLUDE_DIR @GTSAM_SOURCE_ROOT_DIR@ CACHE PATH "@PACKAGE_NAME@ include directory")
+ else()
+   # Find installed library
+   set(@PACKAGE_NAME@_INCLUDE_DIR "${OUR_CMAKE_DIR}/@CONF_REL_INCLUDE_DIR@" CACHE PATH "@PACKAGE_NAME@ include directory")
+diff --git a/gtsam-2.3.0/cmake/GtsamMatlabWrap.cmake b/gtsam-2.3.0/cmake/GtsamMatlabWrap.cmake
+index 34ece2e..1f805f9 100644
+--- a/gtsam-2.3.0/cmake/GtsamMatlabWrap.cmake
++++ b/gtsam-2.3.0/cmake/GtsamMatlabWrap.cmake
+@@ -150,10 +150,10 @@ function(wrap_library_generic moduleName mexFlags modulePath otherLibraries tool
+ 	
+ 	# If building a static module on UNIX, extract dependent .a libraries and add their .o files
+ 	if(UNIX AND GTSAM_MEX_BUILD_STATIC_MODULE)
+-		file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/wrap/external_archives)
++    file(MAKE_DIRECTORY ${GTSAM_BINARY_ROOT_DIR}/wrap/external_archives)
+ 		foreach(archive ${otherLibraryArchives})
+ 			get_filename_component(archive_name ${archive} NAME_WE)
+-			set(extraction_dir ${CMAKE_BINARY_DIR}/wrap/external_archives/${archive_name})
++      set(extraction_dir ${GTSAM_BINARY_ROOT_DIR}/wrap/external_archives/${archive_name})
+ 			file(MAKE_DIRECTORY ${extraction_dir})
+ 			# Extract archive
+ 			execute_process(
+@@ -259,7 +259,7 @@ endfunction(wrap_library_generic)
+ #  otherLibraries  : list of library targets this should depend on
+ function(wrap_library moduleName mexFlags modulePath otherLibraries)
+     # Toolbox generation path goes in build folder
+-    set(toolbox_base_path ${CMAKE_BINARY_DIR}/wrap)
++    set(toolbox_base_path ${GTSAM_BINARY_ROOT_DIR}/wrap)
+     set(toolbox_path ${toolbox_base_path}/${moduleName})
+     
+     # Call generic version of function
+diff --git a/gtsam-2.3.0/cmake/GtsamTesting.cmake b/gtsam-2.3.0/cmake/GtsamTesting.cmake
+index 8833b63..d03be08 100644
+--- a/gtsam-2.3.0/cmake/GtsamTesting.cmake
++++ b/gtsam-2.3.0/cmake/GtsamTesting.cmake
+@@ -119,7 +119,7 @@ macro(gtsam_add_grouped_scripts group pattern target_prefix pretty_prefix_name l
+ 				endif()
+ 				
+ 				# Add TOPSRCDIR
+-				set_property(SOURCE ${script_src} APPEND PROPERTY COMPILE_DEFINITIONS "TOPSRCDIR=\"${CMAKE_SOURCE_DIR}\"")
++        set_property(SOURCE ${script_src} APPEND PROPERTY COMPILE_DEFINITIONS "TOPSRCDIR=\"${GTSAM_SOURCE_ROOT_DIR}\"")
+ 
+ 				# Disable building during make all/install
+ 				if (GTSAM_DISABLE_TESTS_ON_INSTALL)
+@@ -170,7 +170,7 @@ macro(gtsam_add_grouped_scripts group pattern target_prefix pretty_prefix_name l
+ 		set_property(SOURCE ${rest_script_srcs} APPEND PROPERTY COMPILE_DEFINITIONS "main=static no_main")
+ 			
+ 		# Add TOPSRCDIR
+-		set_property(SOURCE ${script_srcs} APPEND PROPERTY COMPILE_DEFINITIONS "TOPSRCDIR=\"${CMAKE_SOURCE_DIR}\"")
++    set_property(SOURCE ${script_srcs} APPEND PROPERTY COMPILE_DEFINITIONS "TOPSRCDIR=\"${GTSAM_SOURCE_ROOT_DIR}\"")
+ 			
+ 		# Add test
+ 		add_dependencies(${target_prefix}.${group} ${target_prefix}_${group}_prog)
+diff --git a/gtsam-2.3.0/cmake/example_project/CMakeLists.txt b/gtsam-2.3.0/cmake/example_project/CMakeLists.txt
+index 7a22bce..e7d6272 100644
+--- a/gtsam-2.3.0/cmake/example_project/CMakeLists.txt
++++ b/gtsam-2.3.0/cmake/example_project/CMakeLists.txt
+@@ -18,7 +18,7 @@ project(myproject CXX C)
+ set(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH}" "${PROJECT_SOURCE_DIR}/cmake")
+ 
+ # Ensure that local folder is searched before library folders
+-include_directories(BEFORE "${CMAKE_SOURCE_DIR}")
++include_directories(BEFORE "${GTSAM_SOURCE_ROOT_DIR}")
+ 
+ # Load build type flags and default to Debug mode
+ include(GtsamBuildTypes)
+@@ -149,7 +149,7 @@ set(GTSAM_BUILD_MEX_BINARY_FLAGS "" CACHE STRING "Extra flags for running Matlab
+ set(MYPROJECT_TOOLBOX_DIR "../matlab/myproject" CACHE PATH "Install folder for matlab toolbox - defaults to inside project")
+ set(WRAP_HEADER_PATH "${GTSAM_DIR}/../../../include")
+ set(MYPROJECT_TOOLBOX_FLAGS 
+-    ${GTSAM_BUILD_MEX_BINARY_FLAGS} -I${PROJECT_SOURCE_DIR} -I${PROJECT_SOURCE_DIR}/myproject -I${Boost_INCLUDE_DIR} -I${MEX_INCLUDE_ROOT} -I${GTSAM_INCLUDE_DIR} -I${WRAP_HEADER_PATH} -Wl,-rpath,${CMAKE_BINARY_DIR}:${CMAKE_INSTALL_PREFIX}/lib)
++  ${GTSAM_BUILD_MEX_BINARY_FLAGS} -I${PROJECT_SOURCE_DIR} -I${PROJECT_SOURCE_DIR}/myproject -I${Boost_INCLUDE_DIR} -I${MEX_INCLUDE_ROOT} -I${GTSAM_INCLUDE_DIR} -I${WRAP_HEADER_PATH} -Wl,-rpath,${GTSAM_BINARY_ROOT_DIR}:${CMAKE_INSTALL_PREFIX}/lib)
+ set(MYPROJECT_LIBRARY_DEPS gtsam gtsam_unstable ransac myproject)
+ set(GTSAM_BUILD_MEX_BIN ON)
+  
+@@ -170,4 +170,4 @@ wrap_library_generic(myproject "${MYPROJECT_TOOLBOX_FLAGS}" "" "${MYPROJECT_LIBR
+ # This config file takes the place of FindXXX.cmake scripts
+ include(GtsamMakeConfigFile)
+ GtsamMakeConfigFile(myproject)
+-export(TARGETS ${myproject_EXPORTED_TARGETS} FILE myproject-exports.cmake)
+\ No newline at end of file
++export(TARGETS ${myproject_EXPORTED_TARGETS} FILE myproject-exports.cmake)
+diff --git a/gtsam-2.3.0/cmake/obsolete/FindGTSAM.cmake b/gtsam-2.3.0/cmake/obsolete/FindGTSAM.cmake
+index 895eb85..cc1e3d3 100644
+--- a/gtsam-2.3.0/cmake/obsolete/FindGTSAM.cmake
++++ b/gtsam-2.3.0/cmake/obsolete/FindGTSAM.cmake
+@@ -39,7 +39,7 @@ else()
+   # lowercase build type
+   string(TOLOWER "${CMAKE_BUILD_TYPE}" build_type_suffix)
+   # build suffix of this project
+-  get_filename_component(my_build_name "${CMAKE_BINARY_DIR}" NAME)
++  get_filename_component(my_build_name "${GTSAM_BINARY_ROOT_DIR}" NAME)
+   
+   set(gtsam_build_names "${my_build_name}/gtsam" "build-${build_type_suffix}/gtsam" "build/gtsam")
+ endif()
+diff --git a/gtsam-2.3.0/cmake/obsolete/FindGTSAM_UNSTABLE.cmake b/gtsam-2.3.0/cmake/obsolete/FindGTSAM_UNSTABLE.cmake
+index 42cc9c8..709134c 100644
+--- a/gtsam-2.3.0/cmake/obsolete/FindGTSAM_UNSTABLE.cmake
++++ b/gtsam-2.3.0/cmake/obsolete/FindGTSAM_UNSTABLE.cmake
+@@ -39,7 +39,7 @@ else()
+   # lowercase build type
+   string(TOLOWER "${CMAKE_BUILD_TYPE}" build_type_suffix)
+   # build suffix of this project
+-  get_filename_component(my_build_name "${CMAKE_BINARY_DIR}" NAME)
++  get_filename_component(my_build_name "${GTSAM_BINARY_ROOT_DIR}" NAME)
+   
+   set(gtsam_unstable_build_names "${my_build_name}/gtsam_unstable" "build-${build_type_suffix}/gtsam_unstable" "build/gtsam_unstable")
+ endif()
+diff --git a/gtsam-2.3.0/gtsam/CMakeLists.txt b/gtsam-2.3.0/gtsam/CMakeLists.txt
+index c3c9547..13ec910 100644
+--- a/gtsam-2.3.0/gtsam/CMakeLists.txt
++++ b/gtsam-2.3.0/gtsam/CMakeLists.txt
+@@ -131,12 +131,12 @@ endif(GTSAM_BUILD_SHARED_LIBRARY)
+ # Set dataset paths
+ set_property(SOURCE "${CMAKE_CURRENT_SOURCE_DIR}/slam/dataset.cpp"
+     APPEND PROPERTY COMPILE_DEFINITIONS
+-	"SOURCE_TREE_DATASET_DIR=\"${CMAKE_SOURCE_DIR}/examples/Data\""
++    "SOURCE_TREE_DATASET_DIR=\"${GTSAM_SOURCE_ROOT_DIR}/examples/Data\""
+ 	"INSTALLED_DATASET_DIR=\"${GTSAM_TOOLBOX_INSTALL_PATH}/gtsam_examples/Data\"")
+ 	
+ # Generate and install config file
+ configure_file(config.h.in config.h)
+-install(FILES ${CMAKE_BINARY_DIR}/gtsam/config.h DESTINATION include/gtsam)
++install(FILES ${GTSAM_BINARY_ROOT_DIR}/gtsam/config.h DESTINATION include/gtsam)
+ 
+ # Create the matlab toolbox for the gtsam library
+ if (GTSAM_INSTALL_MATLAB_TOOLBOX)
+@@ -145,11 +145,11 @@ if (GTSAM_INSTALL_MATLAB_TOOLBOX)
+     
+     # Choose include flags depending on build process
+ 	set(MEX_INCLUDE_ROOT ${GTSAM_SOURCE_ROOT_DIR})
+-	set(MEX_LIB_ROOT ${CMAKE_BINARY_DIR})    # FIXME: is this used?
++  set(MEX_LIB_ROOT ${GTSAM_BINARY_ROOT_DIR})    # FIXME: is this used?
+ 	set(GTSAM_LIB_DIR ${MEX_LIB_ROOT}/gtsam) # FIXME: is this used?
+     
+     # Generate, build and install toolbox
+-    set(mexFlags ${GTSAM_BUILD_MEX_BINARY_FLAGS} -I${MEX_INCLUDE_ROOT} -I${Boost_INCLUDE_DIR}  -I${CMAKE_BINARY_DIR})
++    set(mexFlags ${GTSAM_BUILD_MEX_BINARY_FLAGS} -I${MEX_INCLUDE_ROOT} -I${Boost_INCLUDE_DIR}  -I${GTSAM_BINARY_ROOT_DIR})
+ 
+     # Macro to handle details of setting up targets
+     # FIXME: issue with dependency between wrap_gtsam and wrap_gtsam_build, only shows up on CMake 2.8.3
+diff --git a/gtsam-2.3.0/gtsam/config.h.in b/gtsam-2.3.0/gtsam/config.h.in
+index 9ecfcb3..14aa894 100644
+--- a/gtsam-2.3.0/gtsam/config.h.in
++++ b/gtsam-2.3.0/gtsam/config.h.in
+@@ -18,11 +18,11 @@
+ #pragma once
+ 
+ // Paths to example datasets distributed with GTSAM
+-#define GTSAM_SOURCE_TREE_DATASET_DIR "@CMAKE_SOURCE_DIR@/examples/Data"
++#define GTSAM_SOURCE_TREE_DATASET_DIR "@GTSAM_SOURCE_ROOT_DIR@/examples/Data"
+ #define GTSAM_INSTALLED_DATASET_DIR "@GTSAM_TOOLBOX_INSTALL_PATH@/gtsam_examples/Data"
+ 
+ // Whether GTSAM is compiled to use quaternions for Rot3 (otherwise uses rotation matrices)
+ #cmakedefine GTSAM_USE_QUATERNIONS
+ 
+ // Whether GTSAM is compiled to use Pose3::EXPMAP as the default coordinates mode for Pose3's retract and localCoordinates (otherwise, Pose3::FIRST_ORDER will be used)
+-#cmakedefine GTSAM_POSE3_EXPMAP 
+\ No newline at end of file
++#cmakedefine GTSAM_POSE3_EXPMAP 
