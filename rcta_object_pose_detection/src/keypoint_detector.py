@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 import rospy
 import rospkg
 
@@ -47,8 +47,7 @@ class KeypointDetectorNode(object):
 
         rospack = rospkg.RosPack()
         model_base_path = join(rospack.get_path('rcta_object_pose_detection'),
-                               'models',
-                               'keypoint_localization')
+                               'models')
 
         num_keypoints_file_path = rospy.get_param('~num_keypoints_file',
                                                   'num_keypoints.txt')
@@ -66,7 +65,7 @@ class KeypointDetectorNode(object):
                     self.keypoints_indices[split[0]] = \
                         (start_index, start_index + int(split[1]))
                     start_index += int(split[1])
-        print "Keypoint indices:", self.keypoints_indices
+        rospy.loginfo("Keypoint indices:{}".format(self.keypoints_indices))
 
 
         model_type = rospy.get_param('~model_type', 'small')
@@ -107,7 +106,8 @@ class KeypointDetectorNode(object):
 
         before_time = time.clock()
         try:
-            image = self.bridge.imgmsg_to_cv2(image_msg, "32FC3")
+            # image = self.bridge.imgmsg_to_cv2(image_msg, "32FC3")
+            image = self.bridge.imgmsg_to_cv2(image_msg, "passthrough")
         except CvBridgeError as error:
             rospy.logerr(error)
             return
@@ -115,10 +115,9 @@ class KeypointDetectorNode(object):
         output_image = output_image.astype(np.uint8)
 
         # Rescale image to be in range [0, 1]
-        image /= 255.0
-
-	# Rescale the image to be in range [-1, 1]
-	image = 2 * (image - 0.5)
+        image = image / 255.0
+        # Rescale the image to be in range [-1, 1]
+        image = 2 * (image - 0.5)
 
 
         patches, bounds = self.get_patches_and_bounds(detections_msg.dets,
@@ -213,10 +212,10 @@ class KeypointDetectorNode(object):
             # object is included
             width = x_max - x_min
             height = y_max - y_min
-            x_min = max(0, x_min - width / 6)
-            x_max = min(image.shape[1], x_max + width / 6)
-            y_min = max(0, y_min - height / 6)
-            y_max = min(image.shape[0], y_max + height / 6)
+            x_min = max(0, x_min - width // 6)
+            x_max = min(image.shape[1], x_max + width // 6)
+            y_min = max(0, y_min - height // 6)
+            y_max = min(image.shape[0], y_max + height // 6)
 
             patch = image[y_min:y_max, x_min:x_max, :]
 
@@ -252,7 +251,7 @@ class KeypointDetectorNode(object):
                 index = i * grid_size + j + self.keypoints_indices[object_type][0]
                 if index >= self.keypoints_indices[object_type][1]:
                     continue
-                print keypoints[index].shape
+            
                 combined_keypoints[i*64:(i+1)*64, j*64:(j+1)*64] = keypoints[index]
         return combined_keypoints
 
